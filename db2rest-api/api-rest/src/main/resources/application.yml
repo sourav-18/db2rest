@@ -49,7 +49,6 @@ db2rest:
     data:
       source: ${AUTH_DATA_SOURCE}
 
-
   dateTime:
     enableDataTimeFormatting: ${ENABLE_DATETIME_FORMATTING:false}
     timeFormat: ${TIME_FORMAT:HH:mm:ss}
@@ -59,10 +58,6 @@ db2rest:
   defaultFetchLimit: ${DEFAULT_FETCH_LIMIT:100}
 
   allowSafeDelete : ${ALLOW_SAFE_DELETE:true}
-
-  multiTenancy:
-    enabled: ${MULTI_TENANCY_ENABLED:false}
-    mode: ${MULTI_TENANCY_MODE:'NONE'}
 
   templates: ${SQL_TEMPLATE_PATH}
 

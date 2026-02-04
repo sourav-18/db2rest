@@ -1,21 +1,19 @@
-package com.homihq.db2rest.auth.apikey;
+package com.homihq.db2rest.auth.provider.apikey;
 
-import com.homihq.db2rest.auth.common.AbstractAuthProvider;
-import com.homihq.db2rest.auth.common.ApiKey;
-import com.homihq.db2rest.auth.common.AuthDataProvider;
-import com.homihq.db2rest.auth.common.UserDetail;
+import com.homihq.db2rest.auth.data.ApiKey;
+import com.homihq.db2rest.auth.data.UserDetail;
+import com.homihq.db2rest.auth.datalookup.AuthDataLookup;
+import com.homihq.db2rest.auth.provider.AbstractAuthProvider;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.AntPathMatcher;
 
-@RequiredArgsConstructor
 public class ApiKeyAuthProvider extends AbstractAuthProvider {
-
     private static final String API_KEY_HEADER = "X-API-KEY";
 
-    private final AuthDataProvider authDataProvider;
-    private final AntPathMatcher antPathMatcher;
+    public ApiKeyAuthProvider(AuthDataLookup authDataLookup, AntPathMatcher antPathMatcher) {
+        super(authDataLookup, antPathMatcher);
+    }
 
     @Override
     public boolean canHandle(HttpServletRequest request) {
@@ -26,7 +24,7 @@ public class ApiKeyAuthProvider extends AbstractAuthProvider {
     @Override
     public UserDetail authenticate(HttpServletRequest request) {
         String apiKey = request.getHeader(API_KEY_HEADER);
-        return authDataProvider.getApiKeys()
+        return authDataLookup.getApiKeys()
                 .stream()
                 .filter(a -> a.key().equals(apiKey))
                 .filter(ApiKey::active)
@@ -37,11 +35,11 @@ public class ApiKeyAuthProvider extends AbstractAuthProvider {
 
     @Override
     public boolean authorize(UserDetail userDetail, String requestUri, String method) {
-        return this.authorizeInternal(userDetail, requestUri, method, authDataProvider.getApiResourceRoles(), antPathMatcher);
+        return this.authorizeInternal(userDetail, requestUri, method, authDataLookup.getApiResourceRoles(), antPathMatcher);
     }
 
     @Override
     public boolean isExcluded(String requestUri, String method) {
-        return super.isExcludedInternal(requestUri, method, authDataProvider.getExcludedResources(), antPathMatcher);
+        return super.isExcludedInternal(requestUri, method, authDataLookup.getExcludedResources(), antPathMatcher);
     }
 }

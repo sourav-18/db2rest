@@ -1,10 +1,11 @@
 package com.homihq.db2rest.rest.create;
 
+import com.homihq.db2rest.auth.data.RoleDataFilter;
 import com.homihq.db2rest.bulk.DataProcessor;
 import com.homihq.db2rest.core.dto.CreateBulkResponse;
 import com.homihq.db2rest.core.dto.CreateResponse;
 import com.homihq.db2rest.core.exception.GenericDataAccessException;
-import com.homihq.db2rest.dtos.FileUploadContext;
+import com.homihq.db2rest.dtos.BulkContext;
 import com.homihq.db2rest.jdbc.core.service.BulkCreateService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +23,11 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 @EnableAsync
 public class BulkCreateController implements BulkCreateRestApi {
-
     private final BulkCreateService bulkCreateService;
     private final List<DataProcessor> dataProcessors;
 
-
     public CreateBulkResponse save(
+            List<RoleDataFilter> roleBasedDataFilters,
             String dbId,
             String tableName,
             String schemaName,
@@ -41,17 +41,15 @@ public class BulkCreateController implements BulkCreateRestApi {
                 .findFirst().orElseThrow(() -> new GenericDataAccessException("Unable to process content type : "
                         + request.getContentType()));
 
-        List<Map<String, Object>> data =
-                dataProcessor.getData(request.getInputStream());
+        List<Map<String, Object>> data = dataProcessor.getData(request.getInputStream());
 
-
-        return
-                bulkCreateService.saveBulk(dbId, schemaName, tableName, includeColumns, data, tsIdEnabled, sequences);
-
+        BulkContext context = new BulkContext(dbId, schemaName, tableName, includeColumns, tsIdEnabled, sequences, 0, roleBasedDataFilters);
+        return bulkCreateService.saveBulk(context, data);
     }
 
     @Override
     public CompletableFuture<CreateResponse> saveMultipartFile(
+            List<RoleDataFilter> roleBasedDataFilters,
             String dbId,
             String tableName,
             String schemaName,
@@ -59,7 +57,8 @@ public class BulkCreateController implements BulkCreateRestApi {
             List<String> sequences,
             boolean tsIdEnabled,
             MultipartFile file) {
-        FileUploadContext context = new FileUploadContext(dbId, schemaName, tableName, includeColumns, tsIdEnabled, sequences, 0);
+
+        BulkContext context = new BulkContext(dbId, schemaName, tableName, includeColumns, tsIdEnabled, sequences, 0, roleBasedDataFilters);
         return bulkCreateService.saveMultipartFile(context, file);
     }
 }

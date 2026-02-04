@@ -1,6 +1,10 @@
 package com.homihq.db2rest.rest.delete;
 
+import java.util.List;
+
+import com.homihq.db2rest.auth.data.RoleDataFilter;
 import com.homihq.db2rest.config.Db2RestConfigProperties;
+import com.homihq.db2rest.config.MultiTenancy;
 import com.homihq.db2rest.core.dto.DeleteResponse;
 import com.homihq.db2rest.jdbc.core.service.DeleteService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,7 @@ public class DeleteController implements DeleteRestApi {
 
     @Override
     public DeleteResponse delete(
+            List<RoleDataFilter> roleBasedDataFilters,
             String dbId,
             String schemaName,
             String tableName,
@@ -25,7 +30,8 @@ public class DeleteController implements DeleteRestApi {
 
         db2RestConfigProperties.checkDeleteAllowed(filter);
 
-        int rows = deleteService.delete(dbId, schemaName, tableName, filter);
+        int rows = deleteService.delete(dbId, schemaName, tableName,
+                MultiTenancy.joinFilters(filter, dbId, tableName, roleBasedDataFilters));
         log.debug("Number of rows deleted - {}", rows);
         return DeleteResponse.builder().rows(rows).build();
     }

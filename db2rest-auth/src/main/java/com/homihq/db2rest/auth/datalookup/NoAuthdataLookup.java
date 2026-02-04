@@ -1,16 +1,12 @@
-package com.homihq.db2rest.auth.data;
+package com.homihq.db2rest.auth.datalookup;
 
 
-import com.homihq.db2rest.auth.common.ApiExcludedResource;
-import com.homihq.db2rest.auth.common.ApiKey;
-import com.homihq.db2rest.auth.common.AuthDataProvider;
-import com.homihq.db2rest.auth.common.ResourceRole;
-import com.homihq.db2rest.auth.common.User;
+import com.homihq.db2rest.auth.data.*;
 
 import java.util.List;
 import java.util.Optional;
 
-public class NoAuthdataProvider implements AuthDataProvider {
+public class NoAuthdataLookup implements AuthDataLookup {
     @Override
     public List<ResourceRole> getApiResourceRoles() {
         return List.of();
@@ -29,6 +25,11 @@ public class NoAuthdataProvider implements AuthDataProvider {
     @Override
     public Optional<User> getUserByUsername(String username) {
         return Optional.empty();
+    }
+
+    @Override
+    public List<RoleDataFilter> getRoleDataFilters(String role) {
+        return List.of();
     }
 
     @Override

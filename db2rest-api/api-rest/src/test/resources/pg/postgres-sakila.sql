@@ -225,6 +225,7 @@ CREATE TABLE users (
            username varchar(100) NOT NULL,
            password varchar(150) NOT NULL,
            createdate timestamp without time zone DEFAULT now() NOT NULL,
+           tenant_id integer NOT NULL default 0,
            isActive boolean NOT NULL default true
 );
 

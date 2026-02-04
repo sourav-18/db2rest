@@ -2,12 +2,6 @@ name: db2rest-security
 
 resourceRoles:
   - resource: "/v1/rdbms/pgsqldb/**"
-    method: patch
-    roles:
-      - role2
-      - role3
-      - role4
-  - resource: "/v1/rdbms/pgsqldb/**"
     method: post
     roles:
       - role2
@@ -19,7 +13,18 @@ resourceRoles:
       - role2
       - role3
       - role4
-
+  - resource: "/v1/rdbms/pgsqldb/**"
+    method: patch
+    roles:
+      - role2
+      - role3
+      - role4
+  - resource: "/v1/rdbms/pgsqldb/**"
+    method: delete
+    roles:
+      - role2
+      - role3
+      - role4
 
 excludedResources:
   - resource: "/v1/rdbms/northwind/**"
@@ -57,4 +62,4 @@ roleDataFilters:
     dbId: pgsqldb
     table: users
     column: tenant_id
-    value: 13
+    value: 15

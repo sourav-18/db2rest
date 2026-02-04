@@ -1,0 +1,8 @@
+SQL_TEMPLATE_PATH: classpath:testdata/sql-pg
+ALLOW_SAFE_DELETE: false
+ENABLE_AUTH: true
+AUTH_PROVIDER: basic
+#AUTH_DATA_SOURCE: classpath:/auth-basic.yaml
+AUTH_DATA_SOURCE: file:./src/test/resources/auth-basic.yaml
+
+

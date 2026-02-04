@@ -52,7 +52,7 @@ class PgCrossJoinControllerTest extends PostgreSQLBaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.*").isArray())
                 .andExpect(jsonPath("$.*", hasSize(16)))
-                .andExpect(jsonPath("$[0].*", hasSize(10)))
+                .andExpect(jsonPath("$[0].*", hasSize(11)))
                 .andExpect(jsonPath("$[0].auid", equalTo(1)))
                 .andExpect(jsonPath("$[0].apid", equalTo(1)))
                 .andExpect(jsonPath("$[0].firstname", equalTo("Jack")))

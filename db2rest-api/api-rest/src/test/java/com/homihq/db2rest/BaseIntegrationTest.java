@@ -1,7 +1,11 @@
 package com.homihq.db2rest;
 
-import com.homihq.db2rest.config.Db2RestConfigProperties;
-import lombok.extern.slf4j.Slf4j;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.provider.Arguments;
@@ -18,11 +22,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.List;
+import com.homihq.db2rest.config.Db2RestConfigProperties;
 
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import lombok.extern.slf4j.Slf4j;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -31,7 +33,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 public abstract class BaseIntegrationTest {
 
     @Autowired
-    public MockMvc mockMvc;
+    protected MockMvc mockMvc;
 
     @Autowired
     protected ApplicationContext applicationContext;
@@ -40,15 +42,16 @@ public abstract class BaseIntegrationTest {
     protected Db2RestConfigProperties db2RestConfigProperties;
 
     @BeforeEach
-    void setUp(WebApplicationContext webApplicationContext,
-               RestDocumentationContextProvider restDocumentation) {
+    void setUp(WebApplicationContext webApplicationContext, RestDocumentationContextProvider restDocumentation) {
+        createMockMvc(webApplicationContext, restDocumentation);
+        setupEnv();
+    }
+
+    protected void createMockMvc(WebApplicationContext webApplicationContext, RestDocumentationContextProvider restDocumentation) {
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
-                .apply(documentationConfiguration(restDocumentation)
-                        .snippets().withTemplateFormat(TemplateFormats.markdown())
-                )
+                .apply(documentationConfiguration(restDocumentation).snippets().withTemplateFormat(TemplateFormats.markdown()))
                 .build();
-        setupEnv();
     }
 
     void setupEnv() {

@@ -1,24 +1,6 @@
 package com.homihq.db2rest.jdbc.core.service;
 
-import com.homihq.db2rest.bulk.FileStreamObserver;
-import com.homihq.db2rest.bulk.FileSubject;
-import com.homihq.db2rest.core.dto.CreateBulkResponse;
-import com.homihq.db2rest.core.dto.CreateResponse;
-import com.homihq.db2rest.core.exception.GenericDataAccessException;
-import com.homihq.db2rest.dtos.FileUploadContext;
-import com.homihq.db2rest.jdbc.JdbcManager;
-import com.db2rest.jdbc.dialect.model.DbColumn;
-import com.db2rest.jdbc.dialect.model.DbTable;
-import com.homihq.db2rest.jdbc.core.DbOperationService;
-import com.homihq.db2rest.jdbc.dto.CreateContext;
-import com.homihq.db2rest.jdbc.dto.InsertableColumn;
-import com.homihq.db2rest.jdbc.sql.SqlCreatorTemplate;
-import com.homihq.db2rest.jdbc.tsid.TSIDProcessor;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.web.multipart.MultipartFile;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
@@ -28,7 +10,28 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import static org.springframework.util.CollectionUtils.isEmpty;
+import org.springframework.dao.DataAccessException;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.db2rest.jdbc.dialect.model.DbColumn;
+import com.db2rest.jdbc.dialect.model.DbTable;
+import com.homihq.db2rest.bulk.FileStreamObserver;
+import com.homihq.db2rest.bulk.FileSubject;
+import com.homihq.db2rest.config.MultiTenancy;
+import com.homihq.db2rest.core.dto.CreateBulkResponse;
+import com.homihq.db2rest.core.dto.CreateResponse;
+import com.homihq.db2rest.core.exception.GenericDataAccessException;
+import com.homihq.db2rest.dtos.BulkContext;
+import com.homihq.db2rest.jdbc.JdbcManager;
+import com.homihq.db2rest.jdbc.core.DbOperationService;
+import com.homihq.db2rest.jdbc.dto.CreateContext;
+import com.homihq.db2rest.jdbc.dto.InsertableColumn;
+import com.homihq.db2rest.jdbc.sql.SqlCreatorTemplate;
+import com.homihq.db2rest.jdbc.tsid.TSIDProcessor;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,38 +42,26 @@ public class JdbcBulkCreateService implements BulkCreateService, FileStreamObser
     private final JdbcManager jdbcManager;
     private final DbOperationService dbOperationService;
     private final FileSubject fileSubject;
-    private FileUploadContext context;
+    private BulkContext context;
 
     /**
      * Saves bulk data into the specified table.
-     *
-     * @param dbId            the database ID
-     * @param schemaName      the schema name
-     * @param tableName       the table name
-     * @param includedColumns the columns to include
-     * @param dataList        the data to insert
-     * @param tsIdEnabled     whether TSID is enabled
-     * @param sequences       the sequences to use
      * @return the response of the bulk create operation
      */
-    public CreateBulkResponse saveBulk(
-            String dbId,
-            String schemaName, String tableName,
-            List<String> includedColumns,
-            List<Map<String, Object>> dataList,
-            boolean tsIdEnabled, List<String> sequences) {
-
+    public CreateBulkResponse saveBulk(BulkContext bulkContext, List<Map<String, Object>> dataList) {
         if (Objects.isNull(dataList) || dataList.isEmpty()) {
             throw new GenericDataAccessException("No data provided");
         }
+        MultiTenancy.addTenantColumns(dataList, bulkContext.dbId(), bulkContext.tableName(), bulkContext.roleDataFilters());
 
         log.debug("** Bulk Insert **");
 
+        String dbId = bulkContext.dbId();
         try {
-            DbTable dbTable = jdbcManager.getTable(dbId, schemaName, tableName);
-            List<String> insertableColumns = determineInsertableColumns(includedColumns, dataList);
-            List<Map<String, Object>> tsIds = handleTsId(tsIdEnabled, dbTable, insertableColumns, dataList);
-            List<InsertableColumn> insertableColumnList = convertToInsertableColumnList(insertableColumns, sequences, dbTable);
+            DbTable dbTable = jdbcManager.getTable(dbId, bulkContext.schemaName(), bulkContext.tableName());
+            List<String> insertableColumns = determineInsertableColumns(bulkContext.includeColumns(), dataList);
+            List<Map<String, Object>> tsIds = handleTsId(bulkContext.tsIdEnabled(), dbTable, insertableColumns, dataList);
+            List<InsertableColumn> insertableColumnList = convertToInsertableColumnList(insertableColumns, bulkContext.sequences(), dbTable);
 
             processTypes(dbId, dbTable, insertableColumns, dataList);
 
@@ -82,7 +73,7 @@ public class JdbcBulkCreateService implements BulkCreateService, FileStreamObser
 
             CreateBulkResponse createBulkResponse = executeBatchUpdate(dbId, dataList, sql, dbTable);
 
-            if (tsIdEnabled && Objects.isNull(createBulkResponse.keys())) {
+            if (bulkContext.tsIdEnabled() && Objects.isNull(createBulkResponse.keys())) {
                 return new CreateBulkResponse(createBulkResponse.rows(), tsIds);
             }
 
@@ -97,17 +88,17 @@ public class JdbcBulkCreateService implements BulkCreateService, FileStreamObser
     /**
      * Asynchronously saves a multipart file by streaming its content and performing a bulk insert.
      *
-     * @param fileUploadContext the context containing details about the file upload request
+     * @param bulkContext the context containing details about the file upload request
      * @param file              the multipart file to be saved
      * @return a CompletableFuture containing the response of the create operation
      */
     @Async
     @Override
     public CompletableFuture<CreateResponse> saveMultipartFile(
-            FileUploadContext fileUploadContext,
+            BulkContext bulkContext,
             MultipartFile file) {
 
-        context = fileUploadContext;
+        context = bulkContext;
 
         try (InputStream inputStream = new BufferedInputStream(file.getInputStream())) {
             fileSubject.register(this);
@@ -135,18 +126,17 @@ public class JdbcBulkCreateService implements BulkCreateService, FileStreamObser
         }
 
         try {
-            CreateBulkResponse response = saveBulk(
-                    context.dbId(), context.schemaName(), context.tableName(), context.includeColumns(), data,
-                    context.tsIdEnabled(), context.sequences());
+            CreateBulkResponse response = saveBulk(context, data);
 
-            context = new FileUploadContext(
+            context = new BulkContext(
                     context.dbId(),
                     context.schemaName(),
                     context.tableName(),
                     context.includeColumns(),
                     context.tsIdEnabled(),
                     context.sequences(),
-                    context.rows() + response.rows().length
+                    context.rows() + response.rows().length,
+                    context.roleDataFilters()
             );
 
         } catch (Exception e) {

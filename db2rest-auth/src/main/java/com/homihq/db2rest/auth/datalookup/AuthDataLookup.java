@@ -1,9 +1,11 @@
-package com.homihq.db2rest.auth.common;
+package com.homihq.db2rest.auth.datalookup;
+
+import com.homihq.db2rest.auth.data.*;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface AuthDataProvider {
+public interface AuthDataLookup {
 
     List<ResourceRole> getApiResourceRoles();
 
@@ -15,5 +17,5 @@ public interface AuthDataProvider {
 
     Optional<User> getUserByUsername(String username);
 
-
+    List<RoleDataFilter> getRoleDataFilters(String role);
 }

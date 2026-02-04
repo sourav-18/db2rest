@@ -1,4 +1,4 @@
-package com.homihq.db2rest.auth.jwt;
+package com.homihq.db2rest.auth.provider.jwt;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.OctetSequenceKey;

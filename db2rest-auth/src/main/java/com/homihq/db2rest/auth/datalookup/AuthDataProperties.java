@@ -1,4 +1,4 @@
-package com.homihq.db2rest.auth.data;
+package com.homihq.db2rest.auth.datalookup;
 
 import lombok.Getter;
 import lombok.Setter;

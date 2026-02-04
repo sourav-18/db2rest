@@ -1,4 +1,4 @@
-package com.homihq.db2rest.auth.common;
+package com.homihq.db2rest.auth.data;
 
 
 

@@ -1,16 +1,26 @@
-package com.homihq.db2rest.auth.common;
+package com.homihq.db2rest.auth.provider;
 
+import com.homihq.db2rest.auth.data.ApiExcludedResource;
+import com.homihq.db2rest.auth.data.ResourceRole;
+import com.homihq.db2rest.auth.data.RoleDataFilter;
+import com.homihq.db2rest.auth.data.UserDetail;
+import com.homihq.db2rest.auth.datalookup.AuthDataLookup;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.AntPathMatcher;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Slf4j
 public abstract class AbstractAuthProvider {
+    protected final AuthDataLookup authDataLookup;
+    protected final AntPathMatcher antPathMatcher;
 
     private static final String AUTH_HEADER = "Authorization";
 
@@ -88,5 +98,13 @@ public abstract class AbstractAuthProvider {
         log.debug("Failed to match resource role and/or HTTP method");
 
         return false;
+    }
+
+    public List<RoleDataFilter> getRoleBasedDataFilters(UserDetail userDetail) {
+        List<RoleDataFilter> retval = new ArrayList<>();
+        for (String role : userDetail.getRoles()) {
+            retval.addAll(authDataLookup.getRoleDataFilters(role));
+        }
+        return retval;
     }
 }

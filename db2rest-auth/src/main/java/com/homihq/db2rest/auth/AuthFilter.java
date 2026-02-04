@@ -1,8 +1,8 @@
 package com.homihq.db2rest.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.homihq.db2rest.auth.common.AbstractAuthProvider;
-import com.homihq.db2rest.auth.common.UserDetail;
+import com.homihq.db2rest.auth.provider.AbstractAuthProvider;
+import com.homihq.db2rest.auth.data.UserDetail;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,14 +54,13 @@ public class AuthFilter extends OncePerRequestFilter {
             }
 
             //authorize
-            boolean authorized =
-                    authProvider.authorize(userDetail, requestUri, method);
-
+            boolean authorized = authProvider.authorize(userDetail, requestUri, method);
             if (!authorized) {
                 String errorMessage = "Authorization failure.";
                 addError(errorMessage, request, response);
                 return;
             }
+            request.setAttribute("roleBasedDataFilters", authProvider.getRoleBasedDataFilters(userDetail));
         } else {
             log.debug("URI in whitelist. Security checks not applied.");
         }

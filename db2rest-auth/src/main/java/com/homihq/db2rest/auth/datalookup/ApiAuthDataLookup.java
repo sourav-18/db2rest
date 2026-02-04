@@ -1,12 +1,7 @@
-package com.homihq.db2rest.auth.data;
+package com.homihq.db2rest.auth.datalookup;
 
 
-import com.homihq.db2rest.auth.common.ApiExcludedResource;
-import com.homihq.db2rest.auth.common.ApiKey;
-import com.homihq.db2rest.auth.common.AuthDataProvider;
-import com.homihq.db2rest.auth.common.AuthDataSource;
-import com.homihq.db2rest.auth.common.ResourceRole;
-import com.homihq.db2rest.auth.common.User;
+import com.homihq.db2rest.auth.data.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
@@ -15,28 +10,28 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class ApiAuthDataProvider implements AuthDataProvider {
+public class ApiAuthDataLookup implements AuthDataLookup {
 
-    private final AuthDataSource authDataSource;
+    private final AuthData authData;
 
-    public ApiAuthDataProvider(String apiEndPoint, String apiKey) {
+    public ApiAuthDataLookup(String apiEndPoint, String apiKey) {
         RestClient restClient = RestClient.builder()
                 .baseUrl(apiEndPoint)
                 .defaultHeader("x-api-key", apiKey)
                 .build();
 
-        authDataSource =
+        authData =
                 restClient.get()
                         .accept(MediaType.APPLICATION_JSON)
                         .retrieve()
-                        .body(AuthDataSource.class);
+                        .body(AuthData.class);
 
-        log.debug("Auth data - {}", authDataSource);
+        log.debug("Auth data - {}", authData);
     }
 
     @Override
     public List<ResourceRole> getApiResourceRoles() {
-        return authDataSource.resourceRoles();
+        return authData.resourceRoles();
     }
 
     @Override
@@ -46,7 +41,7 @@ public class ApiAuthDataProvider implements AuthDataProvider {
 
     @Override
     public List<User> getUsers() {
-        return null;
+        return List.of();
     }
 
     @Override
@@ -59,4 +54,8 @@ public class ApiAuthDataProvider implements AuthDataProvider {
         return Optional.empty();
     }
 
+    @Override
+    public List<RoleDataFilter> getRoleDataFilters(String role) {
+        return authData.roleDataFilters().stream().filter(df -> role.equalsIgnoreCase(df.role())).toList();
+    }
 }

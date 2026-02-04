@@ -20,6 +20,11 @@
             <artifactId>db2rest-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.9tiger</groupId>
+            <artifactId>db2rest-auth</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springdoc</groupId>

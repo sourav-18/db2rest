@@ -1,16 +1,16 @@
 package com.homihq.db2rest.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.homihq.db2rest.auth.apikey.ApiKeyAuthProvider;
-import com.homihq.db2rest.auth.basic.BasicAuthProvider;
-import com.homihq.db2rest.auth.common.AbstractAuthProvider;
-import com.homihq.db2rest.auth.common.AuthDataProvider;
-import com.homihq.db2rest.auth.data.ApiAuthDataProvider;
-import com.homihq.db2rest.auth.data.AuthDataProperties;
-import com.homihq.db2rest.auth.data.FileAuthDataProvider;
-import com.homihq.db2rest.auth.data.NoAuthdataProvider;
-import com.homihq.db2rest.auth.jwt.JwtAuthProvider;
-import com.homihq.db2rest.auth.jwt.JwtProperties;
+import com.homihq.db2rest.auth.provider.apikey.ApiKeyAuthProvider;
+import com.homihq.db2rest.auth.provider.basic.BasicAuthProvider;
+import com.homihq.db2rest.auth.provider.AbstractAuthProvider;
+import com.homihq.db2rest.auth.datalookup.AuthDataLookup;
+import com.homihq.db2rest.auth.datalookup.ApiAuthDataLookup;
+import com.homihq.db2rest.auth.datalookup.AuthDataProperties;
+import com.homihq.db2rest.auth.datalookup.FileAuthDataLookup;
+import com.homihq.db2rest.auth.datalookup.NoAuthdataLookup;
+import com.homihq.db2rest.auth.provider.jwt.JwtAuthProvider;
+import com.homihq.db2rest.auth.provider.jwt.JwtProperties;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -97,17 +97,17 @@ public class AuthConfiguration {
     }
 
     @Bean
-    public AuthDataProvider authDataProvider(AuthDataProperties authDataProperties) {
+    public AuthDataLookup authDataProvider(AuthDataProperties authDataProperties) {
 
         if (authDataProperties.isFileProvider()) {
             log.info("Initializing file auth data provider");
-            return new FileAuthDataProvider(authDataProperties.getSource());
+            return new FileAuthDataLookup(authDataProperties.getSource());
         } else if (authDataProperties.isApiDataProvider()) {
             log.info("Initializing API auth data provider");
-            return new ApiAuthDataProvider(authDataProperties.getApiEndpoint(), authDataProperties.getApiKey());
+            return new ApiAuthDataLookup(authDataProperties.getApiEndpoint(), authDataProperties.getApiKey());
         }
         log.info("No auth data provider");
-        return new NoAuthdataProvider();
+        return new NoAuthdataLookup();
     }
 
 }

@@ -1,15 +1,14 @@
-package com.homihq.db2rest.auth.jwt;
+package com.homihq.db2rest.auth.provider.jwt;
 
-import com.homihq.db2rest.auth.common.AbstractAuthProvider;
-import com.homihq.db2rest.auth.common.AuthDataProvider;
-import com.homihq.db2rest.auth.common.UserDetail;
+import com.homihq.db2rest.auth.data.UserDetail;
+import com.homihq.db2rest.auth.datalookup.AuthDataLookup;
+import com.homihq.db2rest.auth.provider.AbstractAuthProvider;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.AntPathMatcher;
@@ -18,14 +17,15 @@ import java.text.ParseException;
 import java.util.List;
 
 @Slf4j
-@RequiredArgsConstructor
 public class JwtAuthProvider extends AbstractAuthProvider {
-
     private static final String BEARER_AUTH = "Bearer";
-
-    private final AuthDataProvider authDataProvider;
-    private final AntPathMatcher antPathMatcher;
     private final ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
+
+    public JwtAuthProvider(AuthDataLookup authDataLookup, AntPathMatcher antPathMatcher,
+                           ConfigurableJWTProcessor<SecurityContext> jwtProcessor) {
+        super(authDataLookup, antPathMatcher);
+        this.jwtProcessor = jwtProcessor;
+    }
 
     @Override
     public boolean canHandle(HttpServletRequest request) {
@@ -50,7 +50,7 @@ public class JwtAuthProvider extends AbstractAuthProvider {
 
     @Override
     public boolean authorize(UserDetail userDetail, String requestUri, String method) {
-        return super.authorizeInternal(userDetail, requestUri, method, authDataProvider.getApiResourceRoles(), antPathMatcher);
+        return super.authorizeInternal(userDetail, requestUri, method, authDataLookup.getApiResourceRoles(), antPathMatcher);
     }
 
     @Override
