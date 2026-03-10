@@ -134,6 +134,20 @@ class SQLiteRSqlOperatorReadControllerTest extends SQLiteBaseIntegrationTest {
                 .andDo(document("sqlite-rsql-not-in"));
     }
 
+@Test
+    @DisplayName("RSQL - Not in operator (Ext)")
+    void testNotInOperatorExt() throws Exception {
+
+        mockMvc.perform(get(VERSION + "/sqlitedb/film")
+                        .param("filter", "film_id=notin=(1,2)")
+                        .param("fields", "film_id,title")
+                        .accept(APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$", hasSize(3)))
+                .andDo(document("sqlite-rsql-not-in-ext"));
+    }
+
     @Test
     @DisplayName("RSQL - Like operator")
     void testLikeOperator() throws Exception {

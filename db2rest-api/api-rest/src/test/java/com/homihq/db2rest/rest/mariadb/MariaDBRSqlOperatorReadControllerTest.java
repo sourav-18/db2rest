@@ -162,6 +162,22 @@ class MariaDBRSqlOperatorReadControllerTest extends MariaDBBaseIntegrationTest {
                 .andDo(document("mariadb-find-films-with-not-in-operator"));
     }
 
+@Test
+    @DisplayName("Test find with Not In Operator (Ext)")
+    void findWithNotInOperatorExt() throws Exception {
+        mockMvc.perform(get(VERSION + "/mariadb/film;desc")
+                        .accept(APPLICATION_JSON)
+                        .param("fields", "film_id")
+                        .param("filter", "film_id=notin=(2,3,5)")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.*").isArray())
+                .andExpect(jsonPath("$.*", anyOf(hasSize(2), hasSize(2))))
+                .andExpect(jsonPath("$[0].film_id").value(1))
+                .andExpect(jsonPath("$[1].film_id").value(4))
+                .andDo(document("mariadb-find-films-with-not-in-operator-ext"));
+    }
+
     @Test
     @DisplayName("Test find with Like Operator")
     void findWithLikeOperator() throws Exception {
