@@ -8,7 +8,7 @@ public class IsRequiredValidator implements ConstraintValidator {
     @Override
     public void validate(Object value, String placeholderName) throws PlaceholderConstraintException {
         if (isMissingValue(value)) {
-            throw new PlaceholderConstraintException(placeholderName, "is required and cannot be null.");
+            throwConstraintViolation(placeholderName, "is required and cannot be null.");
         }
     }
 

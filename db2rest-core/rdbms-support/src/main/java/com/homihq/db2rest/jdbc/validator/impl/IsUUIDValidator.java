@@ -10,12 +10,12 @@ public class IsUUIDValidator implements ConstraintValidator {
 
     @Override
     public void validate(Object value, String placeholderName) throws PlaceholderConstraintException {
-        if (!(value instanceof String) || !isValidUUID((String) value)) {
-            throw new PlaceholderConstraintException(placeholderName, "must be a valid UUID.");
+        if (!(value instanceof String) || !isValidUUIDFormat((String) value)) {
+            throwConstraintViolation(placeholderName, "must be a valid UUID.");
         }
     }
 
-    private boolean isValidUUID(String value) {
+    private boolean isValidUUIDFormat(String value) {
         try {
             UUID.fromString(value);
             return true;
