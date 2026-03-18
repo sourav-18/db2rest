@@ -50,12 +50,20 @@ public class BaseRSQLVisitor implements RSQLVisitor<String, Object> {
 
         Class<?> type = dbColumn.typeMappedClass();
 
-
-        OperatorHandler operatorHandler = Arrays.stream(op.getSymbols())
-                .map(RSQLOperatorHandlers::getOperatorHandler)
-                .filter(handler -> handler != null)
-                .findFirst()
-                .orElse(null);
+        OperatorHandler operatorHandler;
+        String[] symbols = op.getSymbols();
+        
+        // Try canonical symbol first (what parser returns)
+        operatorHandler = RSQLOperatorHandlers.getOperatorHandler(op.getSymbol());
+        
+        // Fallback for multi-symbol operators like =notin=
+        if (operatorHandler == null) {
+            for (String symbol : symbols) {
+                operatorHandler = RSQLOperatorHandlers.getOperatorHandler(symbol);
+                if (operatorHandler != null) break;
+            }
+        }
+        
         if (operatorHandler == null) {
             throw new IllegalArgumentException(String.format("Operator '%s' is invalid", op.getSymbol()));
         }
@@ -65,9 +73,5 @@ public class BaseRSQLVisitor implements RSQLVisitor<String, Object> {
         } else {
             return operatorHandler.handle(dialect, dbColumn, this.dbWhere, node.getArguments().get(0), type, this.dbWhere.paramMap());
         }
-
     }
-
-
-
-}
+}    
