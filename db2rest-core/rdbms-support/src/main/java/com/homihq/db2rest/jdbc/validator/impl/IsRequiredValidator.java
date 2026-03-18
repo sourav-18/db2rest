@@ -7,8 +7,20 @@ public class IsRequiredValidator implements ConstraintValidator {
 
     @Override
     public void validate(Object value, String placeholderName) throws PlaceholderConstraintException {
-        if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
+        if (isMissingValue(value)) {
             throw new PlaceholderConstraintException(placeholderName, "is required and cannot be null.");
         }
+    }
+
+    private boolean isMissingValue(Object value){
+        return isNullValue(value) || isEmptyString(value);
+    }
+
+    private boolean isNullValue(Object value) {
+        return value == null;
+    }
+
+    private boolean isEmptyString(Object value) {
+        return value instanceof String && ((String) value).trim().isEmpty();
     }
 }
