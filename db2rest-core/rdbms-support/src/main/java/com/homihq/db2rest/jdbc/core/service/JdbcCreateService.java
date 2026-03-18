@@ -21,7 +21,6 @@ import java.util.Objects;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
-
 @Slf4j
 @RequiredArgsConstructor
 public class JdbcCreateService implements CreateService {
@@ -37,78 +36,31 @@ public class JdbcCreateService implements CreateService {
             String schemaName, String tableName, List<String> includedColumns,
             Map<String, Object> data, boolean tsIdEnabled, List<String> sequences) {
         try {
-            //1. get actual table
             DbTable dbTable = jdbcManager.getTable(dbId, schemaName, tableName);
 
-            //2. determine the columns to be included in insert statement
-            List<String> insertableColumns = isEmpty(includedColumns)
-                    ? new ArrayList<>(data.keySet().stream().toList())
-                    : new ArrayList<>(includedColumns);
+            List<String> insertableColumns = buildInsertableColumns(includedColumns, data);
 
-            //3. check if tsId is enabled and add those values for PK.
             Map<String, Object> tsIdMap = null;
             if (tsIdEnabled) {
-                List<DbColumn> pkColumns = dbTable.buildPkColumns();
-
-                for (DbColumn pkColumn : pkColumns) {
-                    log.debug("Adding primary key columns - {}", pkColumn.name());
-                    insertableColumns.add(pkColumn.name());
-                }
-
-                tsIdMap = tsidProcessor.processTsId(data, pkColumns);
+                tsIdMap = processTsId(dbTable, insertableColumns, data);
             }
 
-            //4. convert to insertable column object
-            List<InsertableColumn> insertableColumnList = new ArrayList<>();
+            List<InsertableColumn> insertableColumnList = 
+                toInsertableColumnList(insertableColumns);
 
-            for (String colName : insertableColumns) {
-                insertableColumnList.add(new InsertableColumn(colName, null));
-            }
+            processSequences(sequences, insertableColumnList, dbTable);
 
-            log.debug("Sequences - {}", sequences);
-            if (Objects.nonNull(sequences)) { //handle sequences and field functions
-                for (String sequence : sequences) {
-                    String[] colSeq = sequence.split(":");
-                    //Check if size = 2, else ignore, fall at insert
-                    if (colSeq.length == 2) {
-                        String columnName = colSeq[0];
-                        String sequenceValue = colSeq[1];
-                        
-                        // Check if it's a field function (contains fn[)
-                        if (sequenceValue.contains("fn[")) {
-                            // Use the field function as-is
-                            updateOrAddInsertableColumn(insertableColumnList, columnName, sequenceValue);
-                        } else {
-                            // Handle Oracle sequences with .nextval
-                            updateOrAddInsertableColumn(insertableColumnList, columnName, dbTable.schema() + "." + sequenceValue + ".nextval");
-                        }
-                    }
-                }
-            }
+            this.jdbcManager.getDialect(dbId)
+                .processTypes(dbTable, insertableColumns, data);
 
-            this.jdbcManager.getDialect(dbId).processTypes(dbTable, insertableColumns, data);
-
-            CreateContext context = new CreateContext(dbId, dbTable, insertableColumns, insertableColumnList);
+            CreateContext context = new CreateContext(
+                dbId, dbTable, insertableColumns, insertableColumnList);
             String sql = sqlCreatorTemplate.create(context);
 
             log.debug("SQL - {}", sql);
             log.debug("Data - {}", data);
 
-
-            CreateResponse createResponse =
-                    this.jdbcManager.getTxnTemplate(dbId).execute(status ->
-                            {
-                                try {
-                                    return dbOperationService.create(
-                                            jdbcManager.getNamedParameterJdbcTemplate(dbId),
-                                            data, sql, dbTable);
-                                } catch (Exception e) {
-                                    status.setRollbackOnly();
-                                    throw new GenericDataAccessException("Error insert - " + e.getMessage());
-                                }
-                            }
-                    );
-
+            CreateResponse createResponse = executeCreate(dbId, data, sql, dbTable);
 
             if (tsIdEnabled) {
                 assert createResponse != null;
@@ -124,17 +76,83 @@ public class JdbcCreateService implements CreateService {
         }
     }
 
-    private void updateOrAddInsertableColumn(List<InsertableColumn> insertableColumnList, String columnName, String sequenceValue) {
-        // Try to update existing column
+    private List<String> buildInsertableColumns(
+            List<String> includedColumns, Map<String, Object> data) {
+        return isEmpty(includedColumns)
+                ? new ArrayList<>(data.keySet().stream().toList())
+                : new ArrayList<>(includedColumns);
+    }
+
+    private Map<String, Object> processTsId(
+            DbTable dbTable, List<String> insertableColumns, Map<String, Object> data) {
+        List<DbColumn> pkColumns = dbTable.buildPkColumns();
+        for (DbColumn pkColumn : pkColumns) {
+            log.debug("Adding primary key columns - {}", pkColumn.name());
+            insertableColumns.add(pkColumn.name());
+        }
+        return tsidProcessor.processTsId(data, pkColumns);
+    }
+
+    private List<InsertableColumn> toInsertableColumnList(
+            List<String> insertableColumns) {
+        List<InsertableColumn> insertableColumnList = new ArrayList<>();
+        for (String colName : insertableColumns) {
+            insertableColumnList.add(new InsertableColumn(colName, null));
+        }
+        return insertableColumnList;
+    }
+
+    private void processSequences(
+            List<String> sequences,
+            List<InsertableColumn> insertableColumnList,
+            DbTable dbTable) {
+        log.debug("Sequences - {}", sequences);
+        if (Objects.nonNull(sequences)) {
+            for (String sequence : sequences) {
+                String[] colSeq = sequence.split(":");
+                if (colSeq.length == 2) {
+                    String columnName = colSeq[0];
+                    String sequenceValue = colSeq[1];
+                    if (sequenceValue.contains("fn[")) {
+                        updateOrAddInsertableColumn(
+                            insertableColumnList, columnName, sequenceValue);
+                    } else {
+                        updateOrAddInsertableColumn(
+                            insertableColumnList, columnName,
+                            dbTable.schema() + "." + sequenceValue + ".nextval");
+                    }
+                }
+            }
+        }
+    }
+
+    private CreateResponse executeCreate(
+            String dbId, Map<String, Object> data,
+            String sql, DbTable dbTable) {
+        return this.jdbcManager.getTxnTemplate(dbId).execute(status -> {
+            try {
+                return dbOperationService.create(
+                        jdbcManager.getNamedParameterJdbcTemplate(dbId),
+                        data, sql, dbTable);
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new GenericDataAccessException(
+                    "Error insert - " + e.getMessage());
+            }
+        });
+    }
+
+    private void updateOrAddInsertableColumn(
+            List<InsertableColumn> insertableColumnList,
+            String columnName, String sequenceValue) {
         for (int i = 0; i < insertableColumnList.size(); i++) {
             InsertableColumn column = insertableColumnList.get(i);
             if (columnName.equals(column.getColumnName())) {
-                // Update the existing column's sequence value
-                insertableColumnList.set(i, new InsertableColumn(columnName, sequenceValue));
+                insertableColumnList.set(i, 
+                    new InsertableColumn(columnName, sequenceValue));
                 return;
             }
         }
-        // If not found, add new column
         insertableColumnList.add(new InsertableColumn(columnName, sequenceValue));
     }
 }
