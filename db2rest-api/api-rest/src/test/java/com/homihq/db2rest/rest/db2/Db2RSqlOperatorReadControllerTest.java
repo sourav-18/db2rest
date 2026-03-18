@@ -162,6 +162,22 @@ class Db2RSqlOperatorReadControllerTest extends DB2BaseIntegrationTest {
     }
 
     @Test
+    @DisplayName("Test find with Not In Operator (Ext)")
+    void findWithNotInOperatorExt() throws Exception {
+        mockMvc.perform(get(VERSION + "/db2b/FILM;desc")
+                        .accept(APPLICATION_JSON)
+                        .param("fields", "FILM_ID")
+                        .param("filter", "FILM_ID=notin=(2,3,5)")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.*").isArray())
+                .andExpect(jsonPath("$.*", anyOf(hasSize(2), hasSize(2))))
+                .andExpect(jsonPath("$[0].FILM_ID").value(1))
+                .andExpect(jsonPath("$[1].FILM_ID").value(4))
+                .andDo(document("db2-find-films-with-not-in-operator-ext"));
+    }
+
+    @Test
     @DisplayName("Test find with Like Operator")
     void findWithLikeOperator() throws Exception {
         mockMvc.perform(get(VERSION + "/db2b/FILM;desc")
