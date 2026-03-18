@@ -22,6 +22,7 @@ public class NotInOperatorHandler implements OperatorHandler {
 
     @Override
     public String handle(Dialect dialect, DbColumn column, DbWhere dbWhere, List<String> values, Class type, Map<String, Object> paramMap) {
+        log.info("NotInHandler: values={}, type={}, columnType={}", values, type, column.columnDataTypeName());
 
         List<Object> vo = dialect.parseListValues(values, type,column.columnDataTypeName());
 
