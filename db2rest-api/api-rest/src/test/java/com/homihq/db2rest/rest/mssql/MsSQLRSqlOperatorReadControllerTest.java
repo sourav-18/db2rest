@@ -165,7 +165,7 @@ class MsSQLRSqlOperatorReadControllerTest extends MsSQLBaseIntegrationTest {
         mockMvc.perform(get(VERSION + "/mssql/film;desc")
                         .accept(APPLICATION_JSON)
                         .param("fields", "film_id")
-                        .param("filter", "film_id=notin=(2,3,5)")
+                        .param("filter", "film_id=out=(2,3,5)")
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.*").isArray())

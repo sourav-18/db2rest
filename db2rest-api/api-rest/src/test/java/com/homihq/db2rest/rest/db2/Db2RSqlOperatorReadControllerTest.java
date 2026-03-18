@@ -167,7 +167,7 @@ class Db2RSqlOperatorReadControllerTest extends DB2BaseIntegrationTest {
         mockMvc.perform(get(VERSION + "/db2b/FILM;desc")
                         .accept(APPLICATION_JSON)
                         .param("fields", "FILM_ID")
-                        .param("filter", "FILM_ID=notin=(2,3,5)")
+                        .param("filter", "film_id=out=(2,3,5)")
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.*").isArray())

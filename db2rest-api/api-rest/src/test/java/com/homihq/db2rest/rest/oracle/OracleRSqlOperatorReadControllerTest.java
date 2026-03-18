@@ -167,7 +167,7 @@ class OracleRSqlOperatorReadControllerTest extends OracleBaseIntegrationTest {
         mockMvc.perform(get(VERSION + "/oradb/FILM;desc")
                         .accept(APPLICATION_JSON)
                         .param("fields", "FILM_ID")
-                        .param("filter", "FILM_ID=notin=(2,3,5)")
+                        .param("filter", "film_id=out=(2,3,5)")
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.*").isArray())
