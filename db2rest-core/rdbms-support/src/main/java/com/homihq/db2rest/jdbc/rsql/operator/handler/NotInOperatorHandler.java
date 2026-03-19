@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class NotInOperatorHandler implements OperatorHandler {
@@ -22,8 +23,14 @@ public class NotInOperatorHandler implements OperatorHandler {
 
     @Override
     public String handle(Dialect dialect, DbColumn column, DbWhere dbWhere, List<String> values, Class type, Map<String, Object> paramMap) {
+        log.info("NotInHandler: values={}, type={}, columnType={}", values, type, column.columnDataTypeName());
 
-        List<Object> vo = dialect.parseListValues(values, type,column.columnDataTypeName());
+        List<Object> vo;
+            if (type == String.class) {
+                vo = values.stream().map(String::valueOf).collect(Collectors.toList());
+            } else {
+                vo = dialect.parseListValues(values, type, column.columnDataTypeName());
+            }
 
         if (dialect.supportAlias()) {
 

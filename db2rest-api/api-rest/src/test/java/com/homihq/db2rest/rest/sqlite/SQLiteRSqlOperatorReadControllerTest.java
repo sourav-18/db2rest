@@ -139,7 +139,7 @@ class SQLiteRSqlOperatorReadControllerTest extends SQLiteBaseIntegrationTest {
     void testNotInOperatorExt() throws Exception {
 
         mockMvc.perform(get(VERSION + "/sqlitedb/film")
-                        .param("filter", "film_id=notin=(1,2)")
+                        .param("filter", "film_id=out=(1,2)")
                         .param("fields", "film_id,title")
                         .accept(APPLICATION_JSON))
                 .andDo(print())

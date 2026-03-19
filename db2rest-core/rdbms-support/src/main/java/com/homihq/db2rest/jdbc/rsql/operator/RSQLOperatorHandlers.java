@@ -35,8 +35,10 @@ public class RSQLOperatorHandlers {
 
         OPERATOR_HANDLER_MAP.put(CustomRSQLOperators.NOT_LIKE.getSymbol(), new NotLikeOperatorHandler());
         OPERATOR_HANDLER_MAP.put(CustomRSQLOperators.NOT_NULL_2.getSymbol(), new IsNotNullOperatorHandler());
-        OPERATOR_HANDLER_MAP.put(CustomRSQLOperators.NOT_IN_EXT.getSymbol(), new NotInOperatorHandler());
-
+        OPERATOR_HANDLER_MAP.put("=out=",   new NotInOperatorHandler());
+        OPERATOR_HANDLER_MAP.put("=notin=", new NotInOperatorHandler());
+        OPERATOR_HANDLER_MAP.put("notin", new NotInOperatorHandler());   // Matches op.getSymbol()
+        OPERATOR_HANDLER_MAP.put("out", new NotInOperatorHandler());     // Standard RSQL
     }
 
     public static OperatorHandler getOperatorHandler(String symbol) {

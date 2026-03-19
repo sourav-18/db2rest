@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -49,8 +50,20 @@ public class BaseRSQLVisitor implements RSQLVisitor<String, Object> {
 
         Class<?> type = dbColumn.typeMappedClass();
 
-
-        OperatorHandler operatorHandler = RSQLOperatorHandlers.getOperatorHandler(op.getSymbol());
+        OperatorHandler operatorHandler;
+        String[] symbols = op.getSymbols();
+        
+        // Try canonical symbol first (what parser returns)
+        operatorHandler = RSQLOperatorHandlers.getOperatorHandler(op.getSymbol());
+        
+        // Fallback for multi-symbol operators like =notin=
+        if (operatorHandler == null) {
+            for (String symbol : symbols) {
+                operatorHandler = RSQLOperatorHandlers.getOperatorHandler(symbol);
+                if (operatorHandler != null) break;
+            }
+        }
+        
         if (operatorHandler == null) {
             throw new IllegalArgumentException(String.format("Operator '%s' is invalid", op.getSymbol()));
         }
@@ -60,9 +73,5 @@ public class BaseRSQLVisitor implements RSQLVisitor<String, Object> {
         } else {
             return operatorHandler.handle(dialect, dbColumn, this.dbWhere, node.getArguments().get(0), type, this.dbWhere.paramMap());
         }
-
     }
-
-
-
-}
+}    
