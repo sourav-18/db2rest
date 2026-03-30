@@ -96,7 +96,9 @@ public class ReadController {
             @PathVariable String tableName,
             @PathVariable String primaryKey,
             @RequestHeader(name = "Accept-Profile", required = false) String schemaName,
-            @RequestParam(required = false, defaultValue = "*") String fields) {
+            @RequestParam(required = false, defaultValue = "*") String fields,
+            @RequestParam(required = false, defaultValue = "") String filter
+    ) {
 
         log.debug("primaryKey - {}", primaryKey);
 
@@ -105,13 +107,14 @@ public class ReadController {
                 .schemaName(schemaName)
                 .tableName(tableName)
                 .PrimaryKey(primaryKey)
+                .filter(filter)
                 .fields(fields)
                 .limit(1)
                 .defaultFetchLimit(db2RestConfigProperties.getDefaultFetchLimit())
                 .build();
 
 
-        return readService.findAll(readContext);
+        return readService.findByPrimaryKey(readContext);
     }
 
 }

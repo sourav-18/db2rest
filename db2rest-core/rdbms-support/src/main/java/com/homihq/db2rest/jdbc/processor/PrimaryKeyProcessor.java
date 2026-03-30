@@ -35,12 +35,18 @@ public class PrimaryKeyProcessor implements ReadProcessor {
                 );
             }
 
-            String filter = IntStream.range(0, columns.size())
+            String pkFilter = IntStream.range(0, columns.size())
                     .mapToObj(i -> columns.get(i) + "==" + values.get(i))
                     .collect(Collectors.joining(";"));
 
-            log.debug("Filter - {}", filter);
-            readContext.setFilter(filter);
+            String existingFilter = readContext.getFilter();
+
+            if (StringUtils.isNoneBlank(existingFilter)) {
+                pkFilter = pkFilter + ";" + existingFilter;
+            }
+
+            log.debug("Filter - {}", pkFilter);
+            readContext.setFilter(pkFilter);
         }
     }
 }
