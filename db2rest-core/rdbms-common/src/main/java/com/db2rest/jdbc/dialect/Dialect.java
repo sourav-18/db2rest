@@ -71,16 +71,9 @@ public abstract class Dialect {
         if (String.class == type) {
             //return "'" + value + "'";
             return value;
-        }
-         else if (Boolean.class == type || boolean.class == type) {
+        } else if (Boolean.class == type || boolean.class == type) {
             return Boolean.valueOf(value);
-        }
-//        else if (Boolean.class == type || boolean.class == type) {
-//            Boolean aBoolean = Boolean.valueOf(value);
-//            return aBoolean ? "1" : "0";
-//        }
-
-        else if (Integer.class == type || int.class == type) {
+        } else if (Integer.class == type || int.class == type) {
             return Integer.valueOf(value);
         } else if (Long.class == type || long.class == type) {
             return Long.valueOf(value);
