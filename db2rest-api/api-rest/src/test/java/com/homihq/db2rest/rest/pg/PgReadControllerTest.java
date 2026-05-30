@@ -108,7 +108,7 @@ class PgReadControllerTest extends PostgreSQLBaseIntegrationTest {
     @Test
     @DisplayName("Test PostgreSQL boolean type casting in filter")
     void testBooleanFilterCasting() throws Exception {
-        mockMvc.perform(get("/v1/rdbms/pgsqldb/users?filter=isActive==true")
+        mockMvc.perform(get(VERSION + "/pgsqldb/users?filter=isActive==true")
                         .header("Accept-Profile", "public"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.[*]").isArray())
