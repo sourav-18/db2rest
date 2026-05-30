@@ -89,4 +89,32 @@ public class ReadController {
         return readService.findAll(readContext);
     }
 
+    @GetMapping(value = VERSION + "/{dbId}/{tableName}/{primaryKey}", produces = "application/json")
+    public Object findByPrimaryKey(
+            @RequestAttribute(name = ROLEBASEDDATAFILTERS, required = false) List<RoleDataFilter> roleBasedDataFilters,
+            @PathVariable String dbId,
+            @PathVariable String tableName,
+            @PathVariable String primaryKey,
+            @RequestHeader(name = "Accept-Profile", required = false) String schemaName,
+            @RequestParam(required = false, defaultValue = "*") String fields,
+            @RequestParam(required = false, defaultValue = "") String filter
+    ) {
+
+        log.debug("primaryKey - {}", primaryKey);
+
+        ReadContext readContext = ReadContext.builder()
+                .dbId(dbId)
+                .schemaName(schemaName)
+                .tableName(tableName)
+                .PrimaryKey(primaryKey)
+                .filter(filter)
+                .fields(fields)
+                .limit(1)
+                .defaultFetchLimit(db2RestConfigProperties.getDefaultFetchLimit())
+                .build();
+
+
+        return readService.findByPrimaryKey(readContext);
+    }
+
 }
